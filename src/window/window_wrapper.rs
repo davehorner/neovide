@@ -109,13 +109,15 @@ impl WinitWindowWrapper {
     ) -> Self {
         let saved_inner_size = Default::default();
         let renderer = Renderer::new(1.0, initial_config, settings.clone());
-
+        // Pick up NEOVIDE_WINDOW_TITLE, or fall back to "Neovide"
+        let title = std::env::var("NEOVIDE_WINDOW_TITLE")
+        .unwrap_or_else(|_| "Neovide".to_string());
         Self {
             skia_renderer: None,
             renderer,
             keyboard_manager: KeyboardManager::new(settings.clone()),
             mouse_manager: MouseManager::new(settings.clone()),
-            title: String::from("Neovide"),
+            title: title,
             font_changed_last_frame: false,
             saved_inner_size,
             saved_grid_size: None,

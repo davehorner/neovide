@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{env, sync::Arc};
 
 use skia_safe::{
     canvas::{Canvas, SaveLayerRec},
@@ -492,8 +492,11 @@ fn create_paragraphs(
 fn create_window(event_loop: &ActiveEventLoop, settings: &Settings) -> WindowConfig {
     let icon = load_icon();
 
+        // Pick up NEOVIDE_WINDOW_TITLE, or fall back to "Neovide"
+    let title = env::var("NEOVIDE_WINDOW_TITLE")
+        .unwrap_or_else(|_| "Neovide".to_string());
     let window_attributes = Window::default_attributes()
-        .with_title("Neovide")
+        .with_title(&title)
         .with_window_icon(Some(icon))
         .with_transparent(false)
         .with_visible(true)
