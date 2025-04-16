@@ -124,7 +124,7 @@ impl Editor {
                 tracy_zone!("EditorSetTitle");
                 if title.is_empty() {
                     title = std::env::var("NEOVIDE_WINDOW_TITLE")
-                                          .unwrap_or_else(|_| "Neovide".to_string());
+                        .unwrap_or_else(|_| "Neovide".to_string());
                 }
                 let _ = self
                     .event_loop_proxy

@@ -37,23 +37,23 @@ fn main() -> ExitCode {
     // 2) XDG_DATA_HOME → tmp/<app_name>-data
     let data_home = tmp.path().join(format!("{}-data", app_name));
     fs::create_dir_all(&data_home).expect("mkdir data dir");
-#[cfg(windows)]
+    #[cfg(windows)]
     env::set_var("XDG_DATA_HOME", &tmp.path());
-#[cfg(not(windows))]
+    #[cfg(not(windows))]
     env::set_var("XDG_DATA_HOME", &data_home);
 
-// 3) Neovim’s stdpath('data') will now be either:
-//    - on Windows: XDG_DATA_HOME/<app_name>-data  (so stdpath('data') == data_home)
-//    - on non-Windows: XDG_DATA_HOME/<app_name>-data/<app_name> (so stdpath('data') == data_home/app_name)
-#[cfg(windows)]
-let std_data = data_home.clone();
+    // 3) Neovim’s stdpath('data') will now be either:
+    //    - on Windows: XDG_DATA_HOME/<app_name>-data  (so stdpath('data') == data_home)
+    //    - on non-Windows: XDG_DATA_HOME/<app_name>-data/<app_name> (so stdpath('data') == data_home/app_name)
+    #[cfg(windows)]
+    let std_data = data_home.clone();
 
-#[cfg(not(windows))]
-let std_data = data_home.join(app_name);
+    #[cfg(not(windows))]
+    let std_data = data_home.join(app_name);
 
-fs::create_dir_all(&std_data).expect("mkdir stdpath data dir");
+    fs::create_dir_all(&std_data).expect("mkdir stdpath data dir");
 
-let blink_dir = std_data.join("blink.cmp"); 
+    let blink_dir = std_data.join("blink.cmp");
     if !blink_dir.exists() {
         Command::new("git")
             .args(&[

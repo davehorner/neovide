@@ -2,15 +2,14 @@
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use neovide_core::run;
 use std::{
-    env,
-    fs,
+    env, fs,
     io::Write,
     path::PathBuf,
     process::{Command, ExitCode},
 };
 use tempfile::tempdir;
-use neovide_core::run;
 
 static NV_INIT_LUA: &str = include_str!("../config/a_neovide_tui_init.lua");
 
@@ -42,7 +41,8 @@ fn main() -> ExitCode {
         Command::new("git")
             .args(&[
                 "clone",
-                "--depth", "1",
+                "--depth",
+                "1",
                 "https://github.com/Saghen/blink.cmp.git",
                 blink_dir.to_str().unwrap(),
             ])

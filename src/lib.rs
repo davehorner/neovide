@@ -44,6 +44,7 @@ use std::{
 use anyhow::Result;
 use log::trace;
 use std::env::var;
+use std::env;
 use std::panic::PanicHookInfo;
 use std::path::PathBuf;
 use time::macros::format_description;
@@ -101,7 +102,11 @@ pub fn run() -> ExitCode {
     let running_tracker = RunningTracker::new();
     let settings = Arc::new(Settings::new());
 
-    match setup(event_loop.create_proxy(), running_tracker.clone(), settings.clone()) {
+    match setup(
+        event_loop.create_proxy(),
+        running_tracker.clone(),
+        settings.clone(),
+    ) {
         Err(err) => handle_startup_errors(err, event_loop, settings.clone()),
         Ok((window_size, initial_config, runtime)) => {
             let mut update_loop = UpdateLoop::new(
@@ -184,7 +189,11 @@ pub fn init_logger(settings: &Settings) {
         Logger::try_with_env_or_str("neovide")
             .expect("Could not init logger")
             .log_to_file(FileSpec::default())
-            .rotate(Criterion::Size(10_000_000), Naming::Timestamps, Cleanup::KeepLogFiles(1))
+            .rotate(
+                Criterion::Size(10_000_000),
+                Naming::Timestamps,
+                Cleanup::KeepLogFiles(1),
+            )
             .duplicate_to_stderr(Duplicate::Error)
     } else {
         Logger::try_with_env_or_str("neovide = error").expect("Could not init logger")
@@ -204,15 +213,13 @@ fn maybe_disown(settings: &Settings) {
     }
 
     if let Ok(current_exe) = env::current_exe() {
-        assert!(
-            process::Command::new(current_exe)
-                .stdin(process::Stdio::null())
-                .stdout(process::Stdio::null())
-                .stderr(process::Stdio::null())
-                .args(env::args().skip(1))
-                .spawn()
-                .is_ok()
-        );
+        assert!(process::Command::new(current_exe)
+            .stdin(process::Stdio::null())
+            .stdout(process::Stdio::null())
+            .stderr(process::Stdio::null())
+            .args(env::args().skip(1))
+            .spawn()
+            .is_ok());
         process::exit(0);
     } else {
         eprintln!(
@@ -281,7 +288,9 @@ fn log_panic_to_file(panic_info: &PanicHookInfo, backtrace: &Backtrace, path: &O
 fn generate_panic_log_message(panic_info: &PanicHookInfo, backtrace: &Backtrace) -> String {
     let system_time: OffsetDateTime = SystemTime::now().into();
     let timestamp = system_time
-        .format(format_description!("[year]-[month]-[day] [hour]:[minute]:[second]"))
+        .format(format_description!(
+            "[year]-[month]-[day] [hour]:[minute]:[second]"
+        ))
         .expect("Failed to parse current time");
     let partial = generate_panic_message(panic_info);
     format!("{timestamp} - {partial}\n{backtrace:?}\n")
@@ -297,7 +306,12 @@ fn generate_panic_message(panic_info: &PanicHookInfo) -> String {
         .payload()
         .downcast_ref::<&str>()
         .map(ToOwned::to_owned)
-        .or_else(|| panic_info.payload().downcast_ref::<String>().map(String::as_str))
+        .or_else(|| {
+            panic_info
+                .payload()
+                .downcast_ref::<String>()
+                .map(String::as_str)
+        })
         .unwrap_or_else(|| "Could not parse panic payload".into());
 
     format!(
