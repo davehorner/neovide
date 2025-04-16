@@ -32,7 +32,7 @@ mod window;
 mod windows_utils;
 
 use std::{
-    env::{self, args},
+    env::args,
     fs::{create_dir_all, File, OpenOptions},
     io::Write,
     panic::set_hook,
