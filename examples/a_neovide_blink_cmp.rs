@@ -78,5 +78,14 @@ fn main() -> ExitCode {
     }
 
     // Launch Neovide core
-    run()
+    let ret = run();
+        // now read the selection file
+    let sel_path = std_data.join("selection.txt");
+    if let Ok(contents) = fs::read_to_string(&sel_path) {
+        let choice = contents.trim();
+        if !choice.is_empty() {
+            println!("You selected: {}", choice);
+        }
+    }
+    ret
 }
