@@ -1,13 +1,6 @@
 -- src/config/a_neovide_blink_cmp.lua
 -- dave horner 4/25 MIT
 
--- DEBUG: show stdpath('data') and the first few runtimepath entries
-vim.notify("stdpath('data') = " .. vim.fn.stdpath('data'))
-for i, p in ipairs(vim.opt.runtimepath:get()) do
-  if i > 5 then break end
-  vim.notify(string.format("rtp[%d] = %s", i, p))
-end
-
 -- ─── 1) MANUALLY ADD blink.cmp TO RUNTIMEPATH ──────────────────────────────
 local data_dir    = vim.fn.stdpath('data')            -- e.g. ~/.local/share/nvim
 local blink_path  = data_dir .. '/blink.cmp'           -- you must clone here

@@ -2,47 +2,56 @@
 // -- dave horner 4/25 MIT
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-
+use neovide_core::run;
 use std::{
-    env,
-    fs,
+    env, fs,
+    io::Write,
     path::PathBuf,
     process::{Command, ExitCode},
 };
 use tempfile::tempdir;
-use neovide_core::run;
 
 static NV_INIT_LUA: &str = include_str!("a_neovide_blink_cmp.lua");
 
 fn main() -> ExitCode {
+    // Determine NVIM_APPNAME from the executable name
+    let exe_path = env::args().next().unwrap_or_else(|| "nvim".into());
+    let binding = PathBuf::from(&exe_path);
+    let app_name = binding
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("nvim");
+    env::set_var("NVIM_APPNAME", app_name);
+
     // Override the window title
     env::set_var("NEOVIDE_WINDOW_TITLE", "🔮 Blink.CMP Demo 🔮");
 
     // Create a single temp dir for *both* config & data
     let tmp = tempdir().expect("failed to create tempdir");
 
-    // ─── 1) XDG_CONFIG_HOME → tmp/nvim ─────────────────────────────
-    let cfg = tmp.path().join("nvim");
-    fs::create_dir_all(&cfg).expect("mkdir nvim config dir");
+    // 1) XDG_CONFIG_HOME → tmp/a_neovide_tui
+    let cfg = tmp.path().join(app_name);
+    fs::create_dir_all(&cfg).expect("mkdir config dir");
     fs::write(cfg.join("init.lua"), NV_INIT_LUA).expect("write init.lua");
     env::set_var("XDG_CONFIG_HOME", tmp.path());
 
-    // ─── 2) XDG_DATA_HOME → tmp.path() ─────────────────────────────
-    // so that stdpath('data') == tmp.path()/nvim-data on Windows
-    let data_home = tmp.path();
+    // 2) XDG_DATA_HOME → tmp/<app_name>-data
+    let data_home = tmp.path().join(format!("{}-data", app_name));
+    fs::create_dir_all(&data_home).expect("mkdir data dir");
     env::set_var("XDG_DATA_HOME", &data_home);
 
-    // Make sure Neovim’s data dir (stdpath('data')) exists:
-    let std_data = data_home.join("nvim-data");
-    fs::create_dir_all(&std_data).expect("mkdir std data dir");
+    // 3) Neovim’s stdpath('data') will now be data_home/<app_name>
+    //    so we must clone blink.cmp into that folder:
+    let std_data = data_home.join(app_name);
+    fs::create_dir_all(&std_data).expect("mkdir stdpath data dir");
 
-    // ─── 3) Clone blink.cmp into stdpath('data')/blink.cmp ─────────
     let blink_dir = std_data.join("blink.cmp");
     if !blink_dir.exists() {
         Command::new("git")
             .args(&[
                 "clone",
-                "--depth", "1",
+                "--depth",
+                "1",
                 "https://github.com/Saghen/blink.cmp.git",
                 blink_dir.to_str().unwrap(),
             ])
@@ -50,11 +59,11 @@ fn main() -> ExitCode {
             .expect("Failed to clone blink.cmp");
     }
 
-    // ─── 4) Make sure the Neovide config dir exists ───────────────
+    // 3) Make sure the Neovide config dir exists
     let neovide_cfg_dir: PathBuf = tmp.path().join("neovide");
     fs::create_dir_all(&neovide_cfg_dir).expect("failed to create neovide config dir");
 
-    // ─── 5) Create an (empty) settings.toml so the watcher has something to watch
+    // 4) Create an (empty) settings.toml so the watcher has something to watch
     let settings_file = neovide_cfg_dir.join("settings.toml");
     if !settings_file.exists() {
         fs::File::create(&settings_file).expect("failed to create neovide settings file");
